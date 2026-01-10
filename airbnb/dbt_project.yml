@@ -10,15 +10,15 @@ profile: 'airbnb'
 # These configurations specify where dbt should look for different types of files.
 # The `model-paths` config, for example, states that models in this project can be
 # found in the "models/" directory. You probably won't need to change these!
-model-paths: ["models"]
-analysis-paths: ["analyses"]
-test-paths: ["tests"]
-seed-paths: ["seeds"]
-macro-paths: ["macros"]
-snapshot-paths: ["snapshots"]
-asset-paths: ["assets"]
+model-paths: ["models"]  # Tables and views we are building
+analysis-paths: ["analyses"] # sls we need to execute manually
+test-paths: ["tests"] # data tests to ensure data quality
+seed-paths: ["seeds"] # CSV files we load into the data warehouse - like local data
+macro-paths: ["macros"] # reusable snippets of SQL code
+snapshot-paths: ["snapshots"] # point-in-time copies of records - useful for slowly changing dimensions
+asset-paths: ["assets"] # non-SQL files to be included in the project
 
-clean-targets:         # directories to be removed by `dbt clean`
+clean-targets:         # directories to be removed by `dbt clean` # to get rid of compiled files
   - "target"
   - "dbt_packages"
 
@@ -31,18 +31,6 @@ clean-targets:         # directories to be removed by `dbt clean`
 on-run-start:
   - "CREATE TABLE IF NOT EXISTS {{ target.schema }}.audit_log ( model_name STRING, run_timestamp TIMESTAMP )"
 
-models:
+models: # for modfels in the models/ directory - or model defined in the model-paths
   airbnb:
-    +grants:
-      select: ["transform", "reporter"]
-    +post-hook:
-      - "INSERT INTO {{ target.schema }}.audit_log VALUES ('{{ this }}', CURRENT_TIMESTAMP)"
-    +materialized: view
-    dim:
-      +materialized: table
-    src:
-      +materialized: ephemeral
-
-data_tests:
-  +store_failures: true
-  +schema: _test_failures
+  
